@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b0e0c" />
+    <meta
+      name="description"
+      content="Ascend — a considered approach to facial analysis, personal style, and daily progress. Explore your potential with a simulated face scan."
+    />
+    <title>Ascend — Your next level</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23c3f5a5'/%3E%3Cpath d='M10 29 20 9 30 29M15 21h10' stroke='%23101511' fill='none' stroke-width='3'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="mobile-header">
+      <a class="brand" href="#overview"
+        ><span class="brand-mark">A</span> ASCEND<span class="brand-dot"
+          >®</span
+        ></a
+      ><button
+        class="icon-button"
+        id="menu-toggle"
+        aria-label="Open navigation"
+        aria-expanded="false"
+      >
+        ☰
+      </button>
+    </div>
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+      <a class="brand" href="#overview"
+        ><span class="brand-mark">A</span> ASCEND<span class="brand-dot"
+          >®</span
+        ></a
+      >
+      <div class="workspace-label">YOUR WORKSPACE</div>
+      <nav>
+        <a href="#overview" data-nav="overview"
+          ><span data-icon="grid"></span> Overview</a
+        >
+        <a href="#scan" data-nav="scan"
+          ><span data-icon="scan"></span> Face analysis
+          <span class="nav-new">NEW</span></a
+        >
+        <a href="#progress" data-nav="progress"
+          ><span data-icon="chart"></span> My progress</a
+        >
+        <a href="#plan" data-nav="plan"
+          ><span data-icon="check"></span> Action plan
+          <span class="nav-count" id="plan-count">3</span></a
+        >
+        <a href="#routine" data-nav="routine"
+          ><span data-icon="sun"></span> Daily routine</a
+        >
+      </nav>
+      <div class="workspace-label explore-label">EXPLORE</div>
+      <nav>
+        <a href="#body" data-nav="body"
+          ><span data-icon="body"></span> Body analysis
+          <span class="soon-dot"></span
+        ></a>
+        <a href="#style" data-nav="style"
+          ><span data-icon="spark"></span> Style & grooming</a
+        >
+        <a href="#library" data-nav="library"
+          ><span data-icon="book"></span> The library
+          <span class="nav-count">6</span></a
+        >
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="journey-card">
+          <span class="tiny-label">SMALL STEPS. REAL MOMENTUM.</span>
+          <div>Your next chapter<br />starts with you.</div>
+          <a href="#routine">Build your routine <span>↗</span></a>
+        </div>
+        <a class="settings-link" href="#settings"
+          ><span data-icon="settings"></span> Settings</a
+        ><a href="#settings" class="profile"
+          ><span class="avatar" id="avatar">Y</span
+          ><span
+            ><strong id="profile-name">Your workspace</strong
+            ><small>Personal account</small></span
+          ><span class="profile-arrow">⌄</span></a
+        >
+      </div>
+    </aside>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="breadcrumb">
+          Workspace <span>/</span> <strong id="breadcrumb">Overview</strong>
+        </div>
+        <div class="top-actions">
+          <span class="local-status"><i></i> Stored on this device</span
+          ><button
+            class="icon-button"
+            id="help-button"
+            aria-label="About Ascend"
+          >
+            <span data-icon="help"></span></button
+          ><a class="top-avatar avatar" href="#settings" aria-label="Profile"
+            >Y</a
+          >
+        </div>
+      </header>
+      <main id="main" tabindex="-1">
+        <section
+          class="page active"
+          id="page-overview"
+          aria-labelledby="overview-title"
+        >
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow" id="greeting">YOUR PERSONAL EVOLUTION</div>
+              <h1 id="overview-title">A better you. By design.</h1>
+              <p>
+                Understand your features. Build your routine. See your progress.
+              </p>
+            </div>
+            <button class="button button-light" data-open-scan>
+              <span data-icon="scan"></span> Start Face Scan <span>↗</span>
+            </button>
+          </div>
+          <section class="hero-card">
+            <div class="hero-copy">
+              <span class="pill"><i></i> THE NEXT LEVEL IS PERSONAL</span>
+              <h2>Your potential.<br /><em>A clearer picture.</em></h2>
+              <p>
+                A deeper look at your features.<br />A focused plan to bring out
+                your best.
+              </p>
+              <div class="hero-buttons">
+                <button class="button button-green" data-open-scan>
+                  Discover your potential <span>↗</span></button
+                ><button class="text-button" id="explore-demo">
+                  Explore demo <span>→</span>
+                </button>
+              </div>
+              <div class="hero-foot">
+                <span data-icon="lock"></span> Private by design
+                <span class="dot-separator">·</span> No photo leaves your
+                browser
+              </div>
+            </div>
+            <div
+              class="hero-art"
+              aria-label="Decorative three-dimensional facial mapping visualization"
+            >
+              <div class="orbital orbital-one"></div>
+              <div class="orbital orbital-two"></div>
+              <canvas id="face-art"></canvas
+              ><span class="map-label map-label-top"
+                >FACIAL MAPPING <b>↗</b></span
+              ><span class="map-label map-label-bottom"
+                ><i></i> 3D FEATURE VISUALIZATION</span
+              >
+              <div class="art-coordinate">
+                X 0.042<br />Y 0.816<br />Z 0.239
+              </div>
+              <span class="art-cross cross-one">+</span
+              ><span class="art-cross cross-two">+</span>
+            </div>
+          </section>
+          <div class="section-heading">
+            <h2>
+              Your facial overview
+              <span class="badge" id="report-badge">DEMO REPORT</span>
+            </h2>
+            <button class="text-button" data-route="scan">
+              View full analysis <span>↗</span>
+            </button>
+          </div>
+          <div class="overview-grid">
+            <article class="card score-card">
+              <div class="card-label">
+                Resting Face Score <span data-icon="face"></span>
+              </div>
+              <div class="gauge" id="resting-gauge" style="--value: 72">
+                <div>
+                  <strong id="resting-score">72</strong><span>/ 100</span>
+                </div>
+              </div>
+              <div class="score-caption">
+                <i></i><span id="resting-caption">Your starting point</span>
+              </div>
+              <p class="muted small">A baseline for your personal journey</p>
+            </article>
+            <article class="card score-card potential-card">
+              <div class="card-label">
+                Potential Score <span data-icon="spark"></span>
+              </div>
+              <div
+                class="gauge potential"
+                id="potential-gauge"
+                style="--value: 86"
+              >
+                <div>
+                  <strong id="potential-score">86</strong><span>/ 100</span>
+                </div>
+              </div>
+              <div class="score-caption green">
+                <span data-icon="trend"></span
+                ><span id="potential-caption">+14 points of potential</span>
+              </div>
+              <p class="muted small">An illustrative goal to work toward</p>
+            </article>
+            <article class="card focus-card">
+              <div class="card-label">
+                Your next move <span class="badge subtle">PRIORITY 01</span>
+              </div>
+              <div class="focus-icon" data-icon="droplet"></div>
+              <h3>Consistency looks<br />good on you.</h3>
+              <p>
+                Start with the foundations. A simple skincare routine is a great
+                first step.
+              </p>
+              <button class="text-button green" data-route="plan">
+                See your action plan <span>↗</span>
+              </button>
+            </article>
+          </div>
+          <div class="lower-grid">
+            <article class="card routine-preview">
+              <div class="section-heading compact">
+                <h2>Make it a daily thing.</h2>
+                <a href="#routine" class="text-button">Your routine ↗</a>
+              </div>
+              <p class="muted small">
+                Small commitments. A little more progress, every day.
+              </p>
+              <div id="overview-habits" class="habit-list"></div>
+              <div class="routine-footer">
+                <span id="routine-summary">0 of 3 completed today</span
+                ><span class="green">Keep showing up ↗</span>
+              </div>
+            </article>
+            <a href="#body" class="body-teaser card"
+              ><div>
+                <span class="pill small-pill">ON THE HORIZON</span>
+                <h3>The full picture.<br />Coming into focus.</h3>
+                <p>Body analysis is the next chapter.</p>
+                <span class="text-button">Explore what's next ↗</span>
+              </div>
+              <div class="body-silhouette" aria-hidden="true">
+                <div class="body-head"></div>
+                <div class="body-torso"></div>
+                <div class="body-ring"></div></div
+            ></a>
+          </div>
+          <footer class="page-footer">
+            <span
+              >ASCEND <span class="muted">/</span> A little better, every
+              day.</span
+            ><span>SIMULATED ANALYSIS · LOCAL-FIRST</span>
+          </footer>
+        </section>
+
+        <section
+          class="page"
+          id="page-scan"
+          aria-labelledby="scan-title"
+          hidden
+        >
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">KNOW YOUR STARTING POINT</div>
+              <h1 id="scan-title">Face analysis</h1>
+              <p>A detailed view of your features, with a clear next step.</p>
+            </div>
+            <button class="button button-green" data-open-scan>
+              <span data-icon="scan"></span> New scan ↗
+            </button>
+          </div>
+          <div class="notice">
+            <span data-icon="info"></span
+            ><span id="simulation-label"
+              >Demo report · Illustrative scores and observations from the
+              simulation engine.</span
+            ><button class="text-button" id="method-button">
+              How it works ↗
+            </button>
+          </div>
+          <div id="analysis-content"></div>
+        </section>
+
+        <section
+          class="page"
+          id="page-progress"
+          aria-labelledby="progress-title"
+          hidden
+        >
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">THE LONG VIEW</div>
+              <h1 id="progress-title">Your progress, in perspective.</h1>
+              <p>A personal record of every step forward.</p>
+            </div>
+            <button class="button button-green" data-open-scan>
+              Record a new scan ↗
+            </button>
+          </div>
+          <div id="progress-content"></div>
+        </section>
+
+        <section
+          class="page"
+          id="page-plan"
+          aria-labelledby="plan-title"
+          hidden
+        >
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">FOCUS YOUR EFFORT</div>
+              <h1 id="plan-title">Your action plan</h1>
+              <p>A considered set of priorities. One step at a time.</p>
+            </div>
+            <span class="pill" id="plan-status">0 completed</span>
+          </div>
+          <div class="notice">
+            <span data-icon="spark"></span
+            ><span
+              >Start with daily foundations, then explore the details that
+              matter to you.</span
+            >
+          </div>
+          <div id="plan-content"></div>
+        </section>
+
+        <section
+          class="page"
+          id="page-routine"
+          aria-labelledby="routine-title"
+          hidden
+        >
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">BUILT THROUGH REPETITION</div>
+              <h1 id="routine-title">Daily routine</h1>
+              <p>Keep your promises to yourself.</p>
+            </div>
+            <span class="pill" id="routine-date"></span>
+          </div>
+          <div class="routine-layout">
+            <article class="card">
+              <div class="section-heading compact">
+                <h2>Today's essentials</h2>
+                <span class="badge" id="routine-percent">0%</span>
+              </div>
+              <div class="week-strip" id="week-strip"></div>
+              <div id="all-habits" class="habit-list"></div>
+              <form id="habit-form" class="add-habit">
+                <label class="sr-only" for="habit-name">New habit name</label
+                ><input
+                  id="habit-name"
+                  maxlength="65"
+                  placeholder="Add your own daily habit"
+                  required
+                /><button class="button button-green" type="submit">
+                  Add +
+                </button>
+              </form>
+            </article>
+            <article class="card routine-note">
+              <div class="focus-icon" data-icon="sun"></div>
+              <h2>Less intensity.<br />More consistency.</h2>
+              <p class="muted">
+                Build a routine you can repeat on an ordinary day. Your
+                check-ins reset daily; your history stays with you.
+              </p>
+              <div class="routine-stats">
+                <strong id="checkin-total">0</strong
+                ><span>Total habit check-ins</span>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section
+          class="page"
+          id="page-body"
+          aria-labelledby="body-title"
+          hidden
+        >
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">THE NEXT CHAPTER</div>
+              <h1 id="body-title">Beyond the face.</h1>
+              <p>Your body analysis workspace is on the horizon.</p>
+            </div>
+          </div>
+          <article class="card coming-soon">
+            <span class="pill">IN DEVELOPMENT</span>
+            <div class="body-outline" data-icon="body"></div>
+            <h2>The full picture.<br />One personal workspace.</h2>
+            <p>
+              Future tools for posture snapshots, measurement tracking, and
+              fitness goals. In the meantime, create a movement habit in your
+              daily routine.
+            </p>
+            <a href="#routine" class="button button-green"
+              >Build a movement routine ↗</a
+            >
+          </article>
+        </section>
+
+        <section
+          class="page"
+          id="page-style"
+          aria-labelledby="style-title"
+          hidden
+        >
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">DETAILS MAKE THE DIFFERENCE</div>
+              <h1 id="style-title">Style & grooming</h1>
+              <p>Considered choices. A look that feels like you.</p>
+            </div>
+          </div>
+          <div class="style-controls card">
+            <label for="style-goal">Your style direction</label
+            ><select id="style-goal">
+              <option value="minimal">Clean & minimal</option>
+              <option value="textured">Relaxed & textured</option>
+              <option value="classic">Classic & tailored</option>
+            </select>
+          </div>
+          <div id="style-content" class="style-grid"></div>
+        </section>
+
+        <section
+          class="page"
+          id="page-library"
+          aria-labelledby="library-title"
+          hidden
+        >
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">UNDERSTAND THE WHY</div>
+              <h1 id="library-title">The library</h1>
+              <p>Practical guides for a more informed approach.</p>
+            </div>
+          </div>
+          <div class="library-tools">
+            <label class="search-field"
+              ><span data-icon="search"></span
+              ><input
+                id="library-search"
+                type="search"
+                placeholder="Search the library"
+                aria-label="Search the library"
+            /></label>
+            <div class="filter-tabs" aria-label="Filter articles">
+              <button data-filter="all" class="active" aria-pressed="true">
+                All guides</button
+              ><button data-filter="skin" aria-pressed="false">Skin</button
+              ><button data-filter="structure" aria-pressed="false">
+                Structure</button
+              ><button data-filter="style" aria-pressed="false">Style</button>
+            </div>
+          </div>
+          <div class="library-grid" id="library-content"></div>
+        </section>
+
+        <section
+          class="page"
+          id="page-settings"
+          aria-labelledby="settings-title"
+          hidden
+        >
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">MAKE IT YOURS</div>
+              <h1 id="settings-title">Profile & settings</h1>
+              <p>Your workspace, your preferences.</p>
+            </div>
+          </div>
+          <div class="settings-grid">
+            <form class="card settings-form" id="profile-form">
+              <h2>Personal profile</h2>
+              <label for="display-name">Display name</label
+              ><input
+                id="display-name"
+                maxlength="40"
+                placeholder="Your name"
+                autocomplete="nickname"
+              /><label for="goal-select">Your primary focus</label
+              ><select id="goal-select">
+                <option value="consistency">Build consistency</option>
+                <option value="skin">Skin & grooming</option>
+                <option value="style">Personal style</option>
+                <option value="progress">Track progress</option></select
+              ><label class="toggle-row" for="save-photos"
+                ><span
+                  ><strong>Save progress photos</strong
+                  ><small>Keep compressed photos in this browser</small></span
+                ><input id="save-photos" type="checkbox" checked /></label
+              ><label class="toggle-row" for="reduce-motion"
+                ><span
+                  ><strong>Reduce motion</strong
+                  ><small>Use a quieter interface</small></span
+                ><input id="reduce-motion" type="checkbox" /></label
+              ><button class="button button-green" type="submit">
+                Save preferences ↗
+              </button>
+            </form>
+            <div>
+              <article class="card data-card">
+                <h2>Your data stays yours.</h2>
+                <p class="muted">
+                  Photos are processed on this device. Scans, routines, and
+                  preferences are saved in this browser. Export a backup or
+                  clear the workspace whenever you like.
+                </p>
+                <button class="button button-outline" id="export-data">
+                  Export my data ↓</button
+                ><label
+                  class="button button-outline import-button"
+                  tabindex="0"
+                  role="button"
+                  >Import backup ↑<input
+                    id="import-data"
+                    type="file"
+                    accept="application/json,.json"
+                    hidden /></label
+                ><button class="text-button danger" id="clear-data">
+                  Clear all local data
+                </button>
+              </article>
+              <article class="card storage-card">
+                <span data-icon="lock"></span>
+                <div>
+                  <strong>Browser-local workspace</strong>
+                  <p class="muted small">
+                    No account, subscription, or server required.
+                  </p>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <dialog
+      class="scan-dialog"
+      id="scan-dialog"
+      aria-labelledby="scan-dialog-title"
+    >
+      <div class="dialog-heading">
+        <span class="eyebrow">ASCEND / FACE SCAN</span
+        ><button class="icon-button" data-close-dialog aria-label="Close scan">
+          ×
+        </button>
+      </div>
+      <h2 id="scan-dialog-title">Your starting point,<br />in focus.</h2>
+      <p class="muted">Use a clear, front-facing photo in even light.</p>
+      <div class="scan-mode">
+        <button id="upload-mode" class="active">Upload photo</button
+        ><button id="camera-mode">Use webcam</button>
+      </div>
+      <div class="capture-area" id="capture-area">
+        <label
+          class="drop-zone"
+          id="drop-zone"
+          for="photo-input"
+          tabindex="0"
+          role="button"
+          aria-label="Choose a photo to upload"
+          ><span class="upload-icon" data-icon="upload"></span
+          ><strong>Drop your photo here</strong
+          ><span>or click to browse your files</span
+          ><small>JPG, PNG or WebP · up to 12 MB</small
+          ><input
+            type="file"
+            id="photo-input"
+            accept="image/jpeg,image/png,image/webp"
+            hidden
+        /></label>
+        <div class="photo-preview" id="photo-preview" hidden>
+          <img id="scan-preview" alt="Your selected photo" /><button
+            class="button button-outline"
+            id="change-photo"
+          >
+            Change photo
+          </button>
+        </div>
+        <div class="camera-view" id="camera-view" hidden>
+          <video id="camera-video" autoplay playsinline muted></video>
+          <div class="camera-guide"></div>
+          <button class="button button-green" id="capture-photo">
+            Capture photo
+          </button>
+        </div>
+      </div>
+      <p class="form-error" id="scan-error" role="alert"></p>
+      <div class="scan-loading" id="scan-loading" hidden>
+        <div class="loading-bar"><span id="scan-bar"></span></div>
+        <div>
+          <span id="scan-stage">Preparing image</span
+          ><strong id="scan-percent">0%</strong>
+        </div>
+      </div>
+      <button
+        class="button button-green full-width"
+        id="analyze-button"
+        disabled
+      >
+        Analyze my face <span>↗</span>
+      </button>
+      <div class="scan-meta">
+        <span data-icon="lock"></span> On-device processing
+        <span>·</span> Simulated analysis
+      </div>
+    </dialog>
+    <dialog
+      class="article-dialog"
+      id="article-dialog"
+      aria-labelledby="article-title"
+    >
+      <div class="dialog-heading">
+        <span class="eyebrow" id="article-category">THE LIBRARY</span
+        ><button
+          class="icon-button"
+          data-close-dialog
+          aria-label="Close article"
+        >
+          ×
+        </button>
+      </div>
+      <div id="article-body"></div>
+    </dialog>
+    <dialog
+      class="confirm-dialog"
+      id="confirm-dialog"
+      aria-labelledby="confirm-title"
+    >
+      <h2 id="confirm-title">Clear your workspace?</h2>
+      <p class="muted">
+        This removes every saved scan, photo, habit, and preference from this
+        browser. Export a backup first if you want to keep them.
+      </p>
+      <div class="dialog-actions">
+        <button class="button button-outline" data-close-dialog>
+          Keep my data</button
+        ><button class="button button-danger" id="confirm-clear">
+          Clear everything
+        </button>
+      </div>
+    </dialog>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
