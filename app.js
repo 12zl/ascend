@@ -1,7 +1,6 @@
-/* Ascend — buildless, dependency-free application.
- * The analysis engine is deliberately simulated. Its deterministic image hash
- * generates illustrative scores, never biometric measurements or diagnoses.
- * Replace simulateAnalysis() with a validated service for real measurements.
+/* Ascend — buildless application with real on-device vision inference.
+ * MediaPipe measures geometry; Qwen3-VL / SmolVLM generate subjective appearance estimates.
+ * Neither the image hash nor the geometry formula generates an AI rating.
  */
 "use strict";
 
@@ -93,7 +92,6 @@
   let filter = "all",
     search = "",
     selectedPhoto = null,
-    selectedSeed = null,
     stream = null,
     runId = 0,
     toastTimer,
@@ -129,13 +127,14 @@
         (s) =>
           s &&
           /^scan-[\w-]+$/.test(s.id) &&
-          Number.isFinite(s.seed) &&
+          (Number.isFinite(s.seed) || s.report?.engine === "landmarks-v2") &&
           Number.isFinite(new Date(s.date).getTime()),
       )
       .map((s) => ({
         id: s.id,
         date: new Date(s.date).toISOString(),
-        seed: s.seed >>> 0,
+        seed: Number.isFinite(s.seed) ? s.seed >>> 0 : null,
+        report: sanitizeReport(s.report),
         photo:
           next.profile.savePhotos &&
           typeof s.photo === "string" &&
@@ -296,7 +295,7 @@
       time: "Consultation",
       category: "STRUCTURE",
       action:
-        "Try a different beard length or haircut silhouette first. If bite alignment is a concern, book an orthodontic assessment. For questions about chin fillers, bring goals to a licensed clinician for an in-person assessment; this simulation does not establish a need for a procedure.",
+        "Try a different beard length or haircut silhouette first. If bite alignment is a concern, book an orthodontic assessment. For questions about chin fillers, bring goals to a licensed clinician for an in-person assessment; landmark ratios do not establish a need for a procedure.",
       metric: "jaw",
       article: "structure",
       habit: {
@@ -337,7 +336,7 @@
       title: "Jawline: structure, posture & perspective",
       desc: "Understand the options before choosing a direction.",
       time: "5 min",
-      body: `<p>Hair, facial hair, expression, camera perspective, and light all affect the way your lower face appears in a photo.</p><h3>Start with presentation</h3><p>Compare a few beard lengths, a clean neckline, and a haircut with different side volume. Use consistent camera distance when judging the result.</p><h3>Mewing & orthodontics</h3><p>Mewing is often promoted as a jaw-sculpting method, but the American Association of Orthodontists reports that these claims lack scientific support. An orthodontic assessment is the appropriate route for questions about bite or tooth alignment.</p><h3>Fillers & other procedures</h3><p>If you want to explore chin or jaw fillers, discuss goals, alternatives, suitability, and risks with a licensed clinician in person. A simulated score cannot determine an indication or predict a result.</p><h3>Fitness & fat loss</h3><p>If changing body composition is your personal goal, discuss a sustainable approach with a qualified professional. Ascend does not estimate body fat from a facial photo.</p><p>Further reading: <a href="https://aaoinfo.org/whats-trending/is-mewing-bad-for-you/" target="_blank" rel="noopener noreferrer">American Association of Orthodontists: mewing explained ↗</a></p>`,
+      body: `<p>Hair, facial hair, expression, camera perspective, and light all affect the way your lower face appears in a photo.</p><h3>Start with presentation</h3><p>Compare a few beard lengths, a clean neckline, and a haircut with different side volume. Use consistent camera distance when judging the result.</p><h3>Mewing & orthodontics</h3><p>Mewing is often promoted as a jaw-sculpting method, but the American Association of Orthodontists reports that these claims lack scientific support. An orthodontic assessment is the appropriate route for questions about bite or tooth alignment.</p><h3>Fillers & other procedures</h3><p>If you want to explore chin or jaw fillers, discuss goals, alternatives, suitability, and risks with a licensed clinician in person. A geometry index cannot determine an indication or predict a result.</p><h3>Fitness & fat loss</h3><p>If changing body composition is your personal goal, discuss a sustainable approach with a qualified professional. Ascend does not estimate body fat from a facial photo.</p><p>Further reading: <a href="https://aaoinfo.org/whats-trending/is-mewing-bad-for-you/" target="_blank" rel="noopener noreferrer">American Association of Orthodontists: mewing explained ↗</a></p>`,
     },
     {
       id: "hair",
@@ -355,7 +354,7 @@
       title: "A better progress photo",
       desc: "Make each check-in easier to compare.",
       time: "3 min",
-      body: `<p>The most useful progress photo is the one you can reproduce.</p><h3>Set up once</h3><p>Place your camera at eye level, use soft front-facing daylight, and keep the same distance. Mark a position on the floor if it helps.</p><h3>Repeat your conditions</h3><p>Use a neutral expression and the same lens. Avoid switching between a close selfie and a distant portrait.</p><h3>Track the right thing</h3><p>Add a new scan to your timeline and compare your own photos over time. Ascend scores are simulation outputs; they do not measure a physical change.</p>`,
+      body: `<p>The most useful progress photo is the one you can reproduce.</p><h3>Set up once</h3><p>Place your camera at eye level, use soft front-facing daylight, and keep the same distance. Mark a position on the floor if it helps.</p><h3>Repeat your conditions</h3><p>Use a neutral expression and the same lens. Avoid switching between a close selfie and a distant portrait.</p><h3>Track the right thing</h3><p>Add a new scan to your timeline and compare your own photos over time. Ascend geometry indices depend on pose and expression; compare your photos as well as the raw measurements.</p>`,
     },
     {
       id: "style",
@@ -373,47 +372,116 @@
       title: "Inside the Ascend scan",
       desc: "What your report is showing you.",
       time: "2 min",
-      body: `<p>Ascend currently uses an illustrative simulation engine. No face detection, landmark measurement, or biometric inference takes place.</p><h3>How scores are created</h3><p>The browser compresses your photo for display and creates a deterministic hash from the original file bytes. That hash seeds sample metric values and a Resting Face Score. Potential is an illustrative score above that baseline. The same uploaded file produces the same values.</p><h3>What the numbers mean</h3><p>The numbers demonstrate how a future analysis product could present information. They do not measure attractiveness, skin health, symmetry, hairline, or anatomy. Example concerns and severity labels belong to the sample report.</p><h3>The comparison preview</h3><p>Current vs Potential shows your original photo beside a contrast and lighting preview. It does not reshape facial features or predict treatment outcomes.</p><h3>Designed to stay local</h3><p>Photos are processed in the browser. Turn off photo saving in Settings if you prefer to keep only scan records. Use Export to create a personal backup.</p>`,
+      body: `<p>Two independent vision engines run on your device. A vision-language model reads a face crop and generates subjective appearance estimates; MediaPipe detects 478 facial landmarks for visible measurements.</p><h3>How AI ratings work</h3><p>Choose the stronger Qwen3-VL 2B model (about 1.4 GB of weights) or the smaller 500M model (about 400 MB). Transformers.js 4.3.1 runs their quantized ONNX weights through WebGPU. The app asks separately for a current appearance score, a grooming-potential score, and visible grooming suggestions. Greedy decoding is used. Only valid numeric answers from 1 to 100 appear in the gauges. Inspect the actual generated answers in every AI report.</p><p>These general vision-language models were not trained or validated as beauty benchmarks. Their opinions can be inaccurate, biased, or insensitive to differences a person would notice. Potential is a styling scenario; no anatomy change or treatment outcome is predicted.</p><h3>Repeatable scans</h3><p>An identical processed photo, model mode and rubric reuses its saved AI result. An image fingerprint is used only for cache lookup. It never generates a rating. Changing the photo can change the model’s response. Old simulated ratings are excluded from history.</p><h3>Separate geometry reference bands</h3><p>Each optional index is clamp(100 − 35 × |measurement − reference| / tolerance, 1, 100). Jaw width: reference 0.78, tolerance 0.20, weight 20%. Chin proportion: 0.50, 0.20, 15%. Midface / lower third: 0.90, 0.35, 20%. Eye aspect: 3.2, 1.5, 15%. Mean canthal tilt: 4°, 12°, 10%. Projected symmetry: 100 − 250 × mean paired-point error / cheek width, weight 20%. These editorial references do not calculate the AI score.</p><h3>Privacy & compatibility</h3><p>No photo is uploaded. Only public runtime, WASM and model files are downloaded from jsDelivr, Google and Hugging Face. Model files are cached when the browser allows it. A compatible WebGPU device and enough memory are required for AI mode. Otherwise, use lightweight measurements. Failed inference never triggers a simulated rating.</p><p><a href="https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct" target="_blank" rel="noopener noreferrer">Qwen3-VL model documentation ↗</a> · <a href="https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker/web_js" target="_blank" rel="noopener noreferrer">MediaPipe documentation ↗</a></p>`,
     },
   ];
 
-  function simulateAnalysis(seed) {
-    let n = seed >>> 0;
-    const random = () => {
-      n = (Math.imul(n, 1664525) + 1013904223) >>> 0;
-      return n / 4294967296;
+  function sanitizeReport(r) {
+    if (
+      r?.engine !== "landmarks-v2" ||
+      !Array.isArray(r.metrics) ||
+      r.metrics.length !== 8
+    )
+      return null;
+    const numeric = (v, lo, hi) =>
+      Number.isFinite(v) && v >= lo && v <= hi ? v : null;
+    const text = (v) => String(v ?? "").slice(0, 500);
+    let ai = null;
+    if (
+      [
+        "HuggingFaceTB/SmolVLM-500M-Instruct",
+        "HuggingFaceTB/SmolVLM-Instruct",
+        "onnx-community/Qwen3-VL-2B-Instruct-ONNX",
+      ].includes(r.ai?.model) &&
+      r.ai?.rubric === AscendRating.RUBRIC
+    ) {
+      try {
+        ai = {
+          ...AscendRating.parseOutputs(r.ai.raw),
+          model: r.ai.model,
+          revision: text(r.ai.revision),
+          rubric: r.ai.rubric,
+          raw: String(r.ai.raw).slice(0, 7000),
+          device: "webgpu",
+        };
+      } catch {
+        /* Never replace invalid AI output with a fabricated rating. */
+      }
+    }
+    return {
+      engine: "landmarks-v2",
+      ai,
+      aiCached: r.aiCached === true,
+      aiError: text(r.aiError),
+      aiRaw: String(r.aiRaw || "").slice(0, 7000),
+      cacheKey: /^[a-f0-9]{64}$/.test(r.cacheKey) ? r.cacheKey : null,
+      resting: ai?.resting ?? null,
+      geometry: numeric(r.ai ? r.geometry : (r.geometry ?? r.resting), 1, 100),
+      potential: ai?.potential ?? null,
+      confidence: numeric(r.confidence, 0, 100) ?? 0,
+      tilt: numeric(r.tilt, -90, 90),
+      yaw: numeric(r.yaw, -90, 90),
+      roll: numeric(r.roll, -180, 180),
+      landmarkCount: numeric(r.landmarkCount, 468, 478) ?? 478,
+      imageWidth: numeric(r.imageWidth, 1, 4096) ?? 640,
+      imageHeight: numeric(r.imageHeight, 1, 4096) ?? 640,
+      metrics: r.metrics.map((m, i) => ({
+        id: METRICS[i].id,
+        name: text(m.name),
+        value: numeric(m.value, 1, 100),
+        raw: numeric(m.raw, -1000, 1000),
+        unit: text(m.unit),
+        note: text(m.note),
+        weight: numeric(m.weight, 0, 1) ?? 0,
+      })),
+      warnings: (Array.isArray(r.warnings) ? r.warnings : [])
+        .slice(0, 8)
+        .map((w) => ({
+          code: text(w.code),
+          title: text(w.title),
+          detail: text(w.detail),
+          severity: ["High", "Medium", "Low"].includes(w.severity)
+            ? w.severity
+            : "Low",
+        })),
+      points: (Array.isArray(r.points) ? r.points : [])
+        .slice(0, 478)
+        .filter(
+          (p) =>
+            Array.isArray(p) &&
+            p.length === 2 &&
+            p.every((n) => numeric(n, -2, 2) !== null),
+        ),
+      formula: text(r.formula),
     };
-    const metrics = METRICS.map((m) => ({
-      ...m,
-      value: Math.floor(56 + random() * 32),
-    }));
-    const resting = Math.round(
-      metrics.reduce((s, m) => s + m.value, 0) / metrics.length,
-    );
-    const potential = Math.min(99, resting + 11 + Math.floor(random() * 7));
-    const tilt = (random() * 5 - 1).toFixed(1);
-    return { resting, potential, metrics, tilt };
   }
-  const demoReport = {
-    resting: 72,
-    potential: 86,
-    tilt: "2.4",
-    metrics: METRICS.map((m, i) => ({
+  const emptyReport = {
+    resting: null,
+    geometry: null,
+    ai: null,
+    potential: null,
+    confidence: 0,
+    metrics: METRICS.map((m) => ({
       ...m,
-      value: [68, 72, 78, 73, 74, 81, 62, 69][i],
+      value: null,
+      raw: null,
+      unit: "Awaiting scan",
+      note: "Upload a photo to measure this feature",
     })),
+    warnings: [],
   };
-  function currentReport() {
-    return state.scans.length
-      ? simulateAnalysis(state.scans.at(-1).seed)
-      : demoReport;
-  }
   function currentScan() {
-    return state.scans.at(-1);
+    return state.scans
+      .filter((s) => s.report?.engine === "landmarks-v2")
+      .at(-1);
+  }
+  function currentReport() {
+    return currentScan()?.report ?? emptyReport;
   }
   function scoreGauge(value, kind, label) {
-    return `<div class="gauge ${kind === "potential" ? "potential" : ""}" style="--value:${value}" role="img" aria-label="${label}: ${value} out of 100"><div><strong>${value}</strong><span>/ 100</span></div></div>`;
+    return `<div class="gauge ${kind === "potential" ? "potential" : ""}" style="--value:${value ?? 0}" role="img" aria-label="${label}: ${value === null ? "not available" : value + " out of 100"}"><div><strong>${value ?? "—"}</strong><span>${value === null ? "NOT SCORED" : "/ 100"}</span></div></div>`;
   }
+
   const sampleFace = () =>
     `<div class="demo-face" aria-label="Illustrative face outline">${`<svg viewBox="0 0 130 190" fill="none"><path d="M65 5C24 4 12 37 18 80l8 39 18 25 21 11 21-11 18-25 8-39C118 37 106 4 65 5Z M20 63l25-15 20 7 20-7 25 15 M22 83l23 8 20-9 20 9 23-8 M28 118l23-7 14 6 14-6 23 7 M45 143l20-10 20 10 M45 49l-7 29 15 8 12-31 12 31 15-8-7-29 M65 82v28l-10 8 10 4 10-4-10-8 M45 133l20-5 20 5 M32 67l13-5 12 6 M73 68l12-6 13 5 M45 155l-2 18-30 15 M85 155l2 18 30 15 M43 173l22 12 22-12 M18 80l47 53 47-53 M26 119l39-64 39 64" stroke="currentColor"/><g fill="currentColor">${[
       [65, 5],
@@ -438,104 +506,162 @@
   }
 
   function renderOverview() {
-    const report = currentReport(),
-      personal = Boolean(currentScan());
-    $("#resting-score").textContent = report.resting;
-    $("#potential-score").textContent = report.potential;
-    [
-      ["resting", report.resting],
-      ["potential", report.potential],
-    ].forEach(([name, value]) => {
-      const el = $(`#${name}-gauge`);
-      el.style.setProperty("--value", value);
-      el.setAttribute("role", "img");
-      el.setAttribute(
+    const report = currentReport();
+    for (const name of ["resting", "potential"]) {
+      const value = report[name];
+      $("#" + name + "-score").textContent = value ?? "—";
+      const gauge = $("#" + name + "-gauge");
+      gauge.style.setProperty("--value", value ?? 0);
+      gauge.setAttribute("role", "img");
+      gauge.setAttribute(
         "aria-label",
-        `${name === "resting" ? "Resting Face" : "Potential"} Score: ${value} out of 100`,
+        name + " subjective AI estimate: " + (value ?? "not scored"),
       );
-    });
-    $("#potential-caption").textContent =
-      `+${report.potential - report.resting} points of potential`;
-    $("#report-badge").textContent = personal
-      ? "SIMULATED REPORT"
-      : "DEMO REPORT";
-    $("#resting-caption").textContent = personal
-      ? "Your latest simulated score"
-      : "Your starting point";
+    }
+    $("#resting-caption").textContent = report.ai
+      ? "Subjective AI appearance estimate"
+      : "Run browser AI to receive a rating";
+    $("#potential-caption").textContent = report.ai
+      ? "AI grooming & presentation estimate"
+      : "Awaiting browser AI";
+    $("#report-badge").textContent = report.ai
+      ? "ON-DEVICE AI REPORT"
+      : currentScan()
+        ? "MEASURED LANDMARKS"
+        : "YOUR FIRST SCAN AWAITS";
     renderHabits();
   }
+  function landmarkOverlay(r) {
+    if (!r.points?.length) return "";
+    const w = r.imageWidth,
+      h = r.imageHeight,
+      point = (i) =>
+        r.points[i] ? r.points[i][0] * w + "," + r.points[i][1] * h : "";
+    const lines = [
+      [234, 172, 152, 397, 454],
+      [33, 160, 158, 133, 153, 144, 33],
+      [362, 385, 387, 263, 373, 380, 362],
+      [105, 2, 152],
+      [61, 13, 291, 14, 61],
+    ];
+    return `<svg class="landmark-overlay" viewBox="0 0 ${w} ${h}" aria-label="Detected facial landmarks" role="img">${lines.map((line) => '<polyline points="' + line.map(point).join(" ") + '"/>').join("")}${r.points
+      .filter((p, i) => i % 5 === 0)
+      .map(
+        (p) => '<circle cx="' + p[0] * w + '" cy="' + p[1] * h + '" r="1.1"/>',
+      )
+      .join("")}</svg>`;
+  }
   function renderAnalysis() {
-    const r = currentReport(),
-      scan = currentScan(),
-      isDemo = !scan;
-    $("#simulation-label").textContent =
-      `${isDemo ? "Demo report" : "Simulated report · " + formatDate(scan.date)} · Illustrative scores and example observations.`;
+    const scan = currentScan(),
+      r = currentReport();
+    $("#simulation-label").textContent = scan
+      ? "On-device ML landmarks · " +
+        r.landmarkCount +
+        " detected points · capture confidence " +
+        r.confidence +
+        "%"
+      : "Real landmark analysis. Browser AI scores one detected face locally.";
+    if (!scan) {
+      const legacy = state.scans.filter((s) => !s.report).length;
+      $("#analysis-content").innerHTML =
+        `<div class="empty-state">${icon("scan")}<h2>Measure your features.</h2><p>Run a real vision model locally, inspect measured facial proportions, and build your next routine.${legacy ? " Your " + legacy + " legacy scan photos are still in My progress for rescanning." : ""}</p><button class="button button-green" data-open-scan>Start a real face scan ↗</button></div>`;
+      return;
+    }
+    const warnings = r.warnings.length
+      ? r.warnings
+          .map(
+            (issue, i) =>
+              `<article class="card fix-card"><span class="fix-number">${String(i + 1).padStart(2, "0")}</span><div><h3>${escapeHTML(issue.title)}</h3><p>${escapeHTML(issue.detail)}</p><button class="fix-action" data-open-scan>Retake photo ↗</button></div><span class="severity ${issue.severity === "Medium" ? "medium" : ""}">${escapeHTML(issue.severity)} capture priority</span></article>`,
+          )
+          .join("")
+      : '<article class="card"><h3>Capture checks passed.</h3><p class="muted small" style="margin-top:10px">No lighting, pose, size, blur, or expression threshold was triggered. This does not identify skin or anatomical imperfections.</p></article>';
     $("#analysis-content").innerHTML =
-      `<div class="analysis-top"><article class="card analysis-photo">${photoMarkup(scan?.photo, "Your latest progress photo")}<span class="pill photo-badge">${scan?.photo ? "YOUR PHOTO" : isDemo ? "ILLUSTRATIVE FACE" : "PHOTO NOT SAVED"}</span></article><article class="card score-card"><div class="card-label">Resting Face Score ${icon("face")}</div>${scoreGauge(r.resting, "resting", "Resting Face Score")}<div class="score-caption">Simulated baseline</div><p class="muted small">${isDemo ? "Example report" : "Not a biometric measurement"}</p></article><article class="card score-card potential-card"><div class="card-label">Potential Score ${icon("spark")}</div>${scoreGauge(r.potential, "potential", "Potential Score")}<div class="score-caption green">+${r.potential - r.resting} illustrative points</div><p class="muted small">A conceptual goal, not a prediction</p></article></div><div class="section-heading"><h2>The details behind the picture</h2><span class="badge">8 SIMULATED METRICS</span></div><div class="metric-grid">${r.metrics.map((m) => `<article class="card metric-card"><div class="metric-title">${m.name}${icon(m.id === "skin" ? "droplet" : m.id === "eyes" ? "sun" : "face")}</div><div class="metric-value">${m.id === "tilt" ? r.tilt + "°" : m.value}<small>${m.id === "tilt" ? "approximation" : "/ 100"}</small></div><div class="metric-bar"><span style="width:${m.value}%"></span></div><div class="metric-note">${m.note}</div></article>`).join("")}</div><div class="section-heading"><h2>What You Need to Fix</h2><span class="badge">EXAMPLE PRIORITIES</span></div><p class="muted small">A practical starting plan based on this illustrative report. Choose the areas that match your own goals.</p><div class="fix-list">${rankedFixes(
+      `<div class="analysis-top"><article class="card analysis-photo">${photoMarkup(scan.photo, "Your analyzed photo")}${scan.photo ? landmarkOverlay(r) : ""}<span class="pill photo-badge">${r.landmarkCount} REAL LANDMARKS</span></article><article class="card score-card"><div class="card-label">Resting Face Score ${icon("face")}</div>${scoreGauge(r.resting, "resting", "Subjective AI appearance estimate")}<div class="score-caption">${r.ai ? "Subjective AI estimate" : "Not scored"}</div><p class="muted small">${r.ai ? "Vision model · running on your device" : "Choose Browser AI when rescanning"}</p></article><article class="card score-card potential-card"><div class="card-label">Potential Score ${icon("spark")}</div>${scoreGauge(r.potential, "potential", "AI presentation potential estimate")}<div class="score-caption green">${r.ai ? "AI presentation estimate" : "Not scored"}</div><p class="muted small">Grooming & styling scenario</p></article></div><article class="card model-card"><span class="badge">${r.ai ? "REAL BROWSER AI · NO API" : "AI ENGINE STATUS"}</span><h3>${r.ai ? "The model’s assessment" : "Measurements available"}</h3>${r.ai ? '<p class="muted small">' + escapeHTML(r.ai.model) + " · " + escapeHTML(r.ai.rubric) + (r.aiCached ? " · reused for this identical photo" : "") + "</p>" : ""}<p>${escapeHTML(r.ai?.summary || r.aiError || "This scan contains measured landmarks only. Rescan with Browser AI to request an appearance estimate.")}</p><p class="muted small">${r.ai ? "This is a general vision-language model. These are subjective generated opinions, not a validated attractiveness benchmark. Potential describes a grooming scenario, not a measured future result." : "No numeric AI rating is substituted when inference is unavailable or its output is invalid."}</p>${r.ai || r.aiRaw ? '<details class="model-output"><summary>Inspect actual model output ↗</summary><pre>' + escapeHTML(r.ai?.raw || r.aiRaw) + "</pre></details>" : ""}</article><div class="measurement-method card"><div><span class="badge">SEPARATE GEOMETRY ANALYSIS</span><h3>Measured points. Visible proportions.</h3><p>${escapeHTML(r.formula)} Geometry summary: ${r.geometry ?? "withheld"}${r.geometry === null ? "" : "/100"}. Geometry does not generate the AI rating.</p></div><button class="text-button green" data-article="simulation">How the engines work ↗</button></div><div class="section-heading"><h2>Measured facial features</h2><span class="badge">${r.confidence}% CAPTURE CONFIDENCE</span></div><div class="metric-grid">${r.metrics.map((m) => `<article class="card metric-card"><div class="metric-title">${escapeHTML(m.name)}${icon(m.id === "skin" ? "droplet" : "face")}</div><div class="metric-value">${m.raw ?? "—"}<small>${escapeHTML(m.unit)}</small></div><div class="metric-bar"><span style="width:${m.value ?? 0}%"></span></div><div class="metric-note">${escapeHTML(m.note)}${m.value !== null ? "<br>Reference-band index: " + m.value + "/100" : ""}</div></article>`).join("")}</div><div class="section-heading"><h2>What You Need to Fix</h2><span class="badge">${r.ai ? "AI SUGGESTIONS + CAPTURE CHECKS" : "CAPTURE CHECKS"}</span></div><div class="fix-list">${(r.ai?.issues || []).map((issue, i) => '<article class="card fix-card"><span class="fix-number">' + String(i + 1).padStart(2, "0") + '</span><div><div class="ai-fix-label">AI VISUAL OBSERVATION</div><h3>' + escapeHTML(issue.issue) + "</h3><p>" + escapeHTML(issue.action) + '</p><button class="fix-action" data-add-plan="' + goalFor(issue) + '">Add related routine to plan +</button></div><span class="severity ' + (issue.severity === "Medium" ? "medium" : "") + '">' + escapeHTML(issue.severity) + " priority</span></article>").join("")}${warnings}</div><div class="section-heading"><h2>Choose your improvement goals</h2><span class="badge">OPTIONAL ROUTINES</span></div><div class="fix-list">${rankedFixes(
         r,
       )
         .map(
           (f, i) =>
-            `<article class="card fix-card"><div class="fix-number">${String(i + 1).padStart(2, "0")}</div><div><h3>${f.title}</h3><p class="observation">${f.observation}</p><p>${f.action}</p><button class="fix-action" data-add-plan="${f.id}">${state.plan.includes(f.id) ? "In your action plan ✓" : "Add to action plan +"}</button><span class="muted small"> &nbsp;·&nbsp; </span><button class="fix-action" data-article="${f.article}">Read the guide ↗</button></div><span class="severity ${f.severity === "Medium" ? "medium" : ""}">${f.severity} severity</span></article>`,
+            `<article class="card fix-card"><span class="fix-number">${String(i + 1).padStart(2, "0")}</span><div><h3>${f.title}</h3><p class="observation">Optional goal · not a detected imperfection</p><p>${f.action}</p><button class="fix-action" data-add-plan="${f.id}">${state.plan.includes(f.id) ? "In your action plan ✓" : "Add to action plan +"}</button><span class="muted small"> · </span><button class="fix-action" data-article="${f.article}">Read the guide ↗</button></div><span class="severity">Self-selected goal</span></article>`,
         )
         .join(
           "",
-        )}</div><article class="card comparison-card"><div class="section-heading compact"><h2>Current vs Potential</h2><span class="badge">LIGHTING PREVIEW</span></div><p class="muted small">Explore a brighter presentation of the same photo. Facial structure stays the same.</p><div class="comparison-grid"><div class="comparison-frame"><span class="pill">CURRENT · ${r.resting}</span>${photoMarkup(scan?.photo, "Current photo")}</div><div class="comparison-frame potential-view" id="potential-image"><span class="pill">POTENTIAL · ${r.potential}</span>${photoMarkup(scan?.photo, "Same photo with illustrative lighting and contrast adjustment")}</div></div><div class="comparison-controls"><span>Illustrative styling preview · no facial reshaping</span><label>Lighting intensity <input type="range" id="preview-intensity" min="0" max="100" value="60" aria-label="Potential preview lighting intensity"></label></div></article>`;
+        )}</div><article class="card comparison-card"><div class="section-heading compact"><h2>Current vs Potential</h2><span class="badge">LIGHTING ONLY</span></div><p class="muted small">The same photo with an adjustable presentation filter. This does not predict a different face or treatment outcome.</p><div class="comparison-grid"><div class="comparison-frame"><span class="pill">CURRENT PHOTO</span>${photoMarkup(scan.photo, "Current photo")}</div><div class="comparison-frame potential-view" id="potential-image"><span class="pill">LIGHTING PREVIEW · NO PREDICTED SCORE</span>${photoMarkup(scan.photo, "Same photo with a lighting filter")}</div></div><div class="comparison-controls"><span>Same anatomy · no predicted outcome</span><label>Lighting intensity <input type="range" id="preview-intensity" min="0" max="100" value="60" aria-label="Potential preview lighting intensity"></label></div></article>`;
+  }
+  function goalFor(issue) {
+    const text = (issue.issue + " " + issue.action).toLowerCase();
+    if (/skin|acne|moisturi|cleanse|texture|spf/.test(text)) return "skin";
+    if (/eyebrow|brow|glasses|eyewear|under.eye/.test(text)) return "eyes";
+    if (/hair|beard|shav|groom/.test(text)) return "grooming";
+    if (/jaw|chin|lower.face/.test(text)) return "jaw";
+    return "photo";
   }
   function rankedFixes(r) {
+    const priorities = [
+      ...(r.ai?.issues || []).map(goalFor),
+      ...(r.warnings?.length ? ["photo"] : []),
+    ];
     return FIXES.slice().sort((a, b) => {
-      const metric = (id) => r.metrics.find((m) => m.id === id)?.value ?? 75;
-      return metric(a.metric) - metric(b.metric);
+      const rank = (id) =>
+        priorities.includes(id) ? priorities.indexOf(id) : 100;
+      return rank(a.id) - rank(b.id);
     });
   }
+  function comparableScans() {
+    const latest = state.scans.findLast((s) => s.report?.ai)?.report.ai;
+    return latest
+      ? state.scans.filter(
+          (s) =>
+            s.report?.ai?.model === latest.model &&
+            s.report.ai.revision === latest.revision &&
+            s.report.ai.rubric === latest.rubric,
+        )
+      : [];
+  }
   function renderProgress() {
-    const root = $("#progress-content");
+    const root = $("#progress-content"),
+      measured = state.scans.filter((s) => s.report),
+      scored = comparableScans();
     if (!state.scans.length) {
-      root.innerHTML = `<div class="empty-state">${icon("chart")}<h2>Every journey has a first frame.</h2><p>Your scan history and progress photos will appear here. Create your first scan to start your timeline.</p><button class="button button-green" data-open-scan>Record your first scan ↗</button></div>`;
+      root.innerHTML = `<div class="empty-state">${icon("chart")}<h2>Every journey has a first frame.</h2><p>Record a real landmark scan to start your photo timeline.</p><button class="button button-green" data-open-scan>Record your first scan ↗</button></div>`;
       return;
     }
-    const first = simulateAnalysis(state.scans[0].seed),
-      last = currentReport(),
-      delta = last.resting - first.resting;
-    root.innerHTML = `<div class="history-stats"><article class="card"><h3>Recorded scans</h3><strong>${state.scans.length}</strong></article><article class="card"><h3>Latest simulated score</h3><strong>${last.resting}<span class="muted small"> / 100</span></strong></article><article class="card"><h3>Change from first scan</h3><strong class="green">${delta > 0 ? "+" : ""}${delta}</strong></article></div><article class="card chart-card"><div class="section-heading compact"><h2>Score history</h2><span class="badge">SIMULATION OUTPUTS</span></div><div class="chart-wrap">${renderChart()}</div><div class="chart-legend"><span>Resting Face Score</span><span>Potential Score</span></div><p class="muted small" style="margin-top:14px">Different photos change the simulated output. Score changes do not measure physical improvement.</p></article><div class="section-heading"><h2>Your photo timeline</h2><span class="muted small">Latest first · up to ${MAX_PHOTOS} scans</span></div><div class="timeline">${state.scans
+    const first = scored[0]?.report.resting,
+      last = scored.at(-1)?.report.resting,
+      delta = last !== undefined ? last - first : null;
+    root.innerHTML = `<div class="history-stats"><article class="card"><h3>Measured scans</h3><strong>${measured.length}</strong></article><article class="card"><h3>Latest AI estimate</h3><strong>${last ?? "—"}</strong></article><article class="card"><h3>Estimate change</h3><strong class="green">${delta === null ? "—" : (delta > 0 ? "+" : "") + delta}</strong></article></div><article class="card chart-card"><div class="section-heading compact"><h2>AI score history</h2><span class="badge">SUBJECTIVE AI ESTIMATES</span></div><div class="chart-wrap">${renderChart()}</div><p class="muted small" style="margin-top:14px">Scores are the model’s subjective appearance estimates. Pose, expression, grooming and model limitations can affect them. The chart compares the latest model, revision and rubric only. Green: current; orange dashed: potential. Geometry-only and legacy simulated scans are excluded.</p></article><div class="section-heading"><h2>Your photo timeline</h2><span class="muted small">Latest first · up to ${MAX_PHOTOS} scans</span></div><div class="timeline">${state.scans
       .slice()
       .reverse()
       .map(
         (s) =>
-          `<article class="card timeline-item">${photoMarkup(s.photo, s.photo ? "Progress photo from " + formatDate(s.date) : "Photo not saved")}<div class="timeline-meta"><span>${formatDate(s.date, { year: "numeric" })}<br><span class="muted">${s.photo ? "Photo saved" : "Photo not saved"}</span></span><strong>${simulateAnalysis(s.seed).resting}</strong></div><button class="timeline-delete" data-delete-scan="${s.id}" aria-label="Delete scan from ${formatDate(s.date)}">Remove this scan ×</button></article>`,
+          `<article class="card timeline-item">${photoMarkup(s.photo, "Progress photo from " + formatDate(s.date))}<div class="timeline-meta"><span>${formatDate(s.date, { year: "numeric" })}<br><span class="muted">${s.report?.ai ? "Browser AI estimate" : s.report ? "Measured landmarks only" : "Legacy simulation · rescan"}</span></span><strong>${s.report?.resting ?? "—"}</strong></div>${s.photo ? '<button class="timeline-delete" data-rescan="' + s.id + '">Rescan this photo ↗</button>' : ""}<button class="timeline-delete" data-delete-scan="${s.id}" aria-label="Delete scan from ${formatDate(s.date)}">Remove this scan ×</button></article>`,
       )
       .join("")}</div>`;
   }
   function renderChart() {
-    const scans = state.scans,
-      w = 800,
+    const scans = comparableScans();
+    if (!scans.length)
+      return '<div class="empty-state" style="padding:35px"><p>No measured scores yet. Rescan a saved photo or record a new scan.</p></div>';
+    const w = 800,
       h = 220,
-      pad = 35;
-    const x = (i) =>
+      pad = 35,
+      x = (i) =>
         scans.length === 1
           ? w / 2
           : pad + (i * (w - pad * 2)) / (scans.length - 1),
       y = (score) => h - pad - (score * (h - pad * 2)) / 100;
-    const values = scans.map((s) => simulateAnalysis(s.seed));
-    let svg = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Simulated scan score history"><title>${scans.map((s, i) => `${formatDate(s.date)}: resting ${values[i].resting}, potential ${values[i].potential}`).join("; ")}</title>`;
+    let svg = `<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="AI appearance estimate history"><title>${scans.map((s) => formatDate(s.date) + ": " + s.report.resting).join("; ")}</title>`;
     [0, 25, 50, 75, 100].forEach((v) => {
       svg += `<line x1="${pad}" y1="${y(v)}" x2="${w - pad}" y2="${y(v)}" stroke="#2a3626" stroke-dasharray="3 5"/><text x="12" y="${y(v) + 3}" fill="#7c9271" font-size="9">${v}</text>`;
     });
-    ["potential", "resting"].forEach((key) => {
-      const color = key === "resting" ? "#c1f4a4" : "#7e9680";
-      svg += `<polyline points="${values.map((v, i) => `${x(i)},${y(v[key])}`).join(" ")}" fill="none" stroke="${color}" stroke-width="2"/>`;
-      values.forEach((v, i) => {
-        svg += `<circle cx="${x(i)}" cy="${y(v[key])}" r="4" fill="${color}"><title>${key}: ${v[key]}</title></circle>`;
-      });
-    });
-    const indices = [
-      ...new Set([0, Math.floor((scans.length - 1) / 2), scans.length - 1]),
-    ];
-    indices.forEach((i) => {
-      svg += `<text x="${x(i)}" y="${h - 6}" text-anchor="middle" fill="#91a586" font-size="9">${formatDate(scans[i].date)}</text>`;
+    svg += `<polyline points="${scans.map((s, i) => x(i) + "," + y(s.report.resting)).join(" ")}" fill="none" stroke="#c1f4a4" stroke-width="2"/>`;
+    svg += `<polyline points="${scans.map((s, i) => x(i) + "," + y(s.report.potential)).join(" ")}" fill="none" stroke="#e7bb83" stroke-width="2" stroke-dasharray="5 4"/>`;
+    scans.forEach((s, i) => {
+      svg += `<circle cx="${x(i)}" cy="${y(s.report.resting)}" r="4" fill="#c1f4a4"><title>${s.report.resting}</title></circle>`;
+      svg += `<circle cx="${x(i)}" cy="${y(s.report.potential)}" r="3" fill="#e7bb83"><title>Potential ${s.report.potential}</title></circle>`;
     });
     return svg + "</svg>";
   }
+
   function renderPlan() {
     const done = state.plan.filter((id) => state.completed.includes(id)).length;
     $("#plan-count").textContent = state.plan.length - done;
@@ -545,7 +671,12 @@
           .map((id, i) => {
             const f = FIXES.find((f) => f.id === id),
               completed = state.completed.includes(id);
-            return `<article class="card plan-card ${completed ? "done" : ""}"><button class="habit-check ${completed ? "checked" : ""}" data-toggle-plan="${id}" aria-pressed="${completed}" aria-label="${completed ? "Mark incomplete" : "Complete"}: ${f.title}">${completed ? "✓" : ""}</button><div><h3>${f.title}</h3><p>${f.action}</p><div class="plan-meta"><span>${f.category}</span><span>${f.time}</span><button class="text-button green" data-add-habit="${id}">Add daily habit +</button><button class="text-button" data-remove-plan="${id}">Remove ×</button></div></div><span class="plan-priority">Priority ${String(i + 1).padStart(2, "0")}</span></article>`;
+            const issue = currentReport().ai?.issues.find(
+              (issue) => goalFor(issue) === id,
+            );
+            const title = escapeHTML(issue?.issue || f.title),
+              action = escapeHTML(issue?.action || f.action);
+            return `<article class="card plan-card ${completed ? "done" : ""}"><button class="habit-check ${completed ? "checked" : ""}" data-toggle-plan="${id}" aria-pressed="${completed}" aria-label="${completed ? "Mark incomplete" : "Complete"}: ${title}">${completed ? "✓" : ""}</button><div><h3>${title}</h3><p>${action}</p><div class="plan-meta"><span>${issue ? "AI SUGGESTION" : f.category}</span><span>${f.time}</span><button class="text-button green" data-add-habit="${id}">Add daily habit +</button><button class="text-button" data-remove-plan="${id}">Remove ×</button></div></div><span class="plan-priority">Priority ${String(i + 1).padStart(2, "0")}</span></article>`;
           })
           .join("")
       : `<div class="empty-state">${icon("check")}<h2>A clear canvas.</h2><p>Choose the priorities that matter to you from your face report.</p><a href="#scan" class="button button-green">Explore the report ↗</a></div>`;
@@ -761,15 +892,7 @@
       URL.revokeObjectURL(url);
     }
   }
-  function hashBytes(bytes) {
-    // Original file bytes avoid canvas fingerprint randomization and rendering variance.
-    let hash = 2166136261;
-    for (let i = 0; i < bytes.length; i++) {
-      hash ^= bytes[i];
-      hash = Math.imul(hash, 16777619);
-    }
-    return hash >>> 0;
-  }
+
   function stopCamera() {
     if (stream) stream.getTracks().forEach((t) => t.stop());
     stream = null;
@@ -787,7 +910,6 @@
   function openScan() {
     runId++;
     selectedPhoto = null;
-    selectedSeed = null;
     $("#photo-input").value = "";
     $("#scan-error").textContent = "";
     $("#scan-loading").hidden = true;
@@ -807,10 +929,8 @@
     $("#analyze-button").disabled = true;
     try {
       const photo = await processImage(file);
-      const seed = hashBytes(new Uint8Array(await file.arrayBuffer()));
       if (token !== runId || !scanDialog.open) return;
       selectedPhoto = photo;
-      selectedSeed = seed;
       $("#scan-preview").src = photo;
       stopCamera();
       setScanMode(false);
@@ -882,12 +1002,121 @@
     ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     selectedPhoto = canvas.toDataURL("image/jpeg", 0.78);
-    selectedSeed = hashBytes(new TextEncoder().encode(selectedPhoto));
     $("#scan-preview").src = selectedPhoto;
     stopCamera();
     setScanMode(false);
     $("#analyze-button").disabled = false;
     $("#scan-error").textContent = "";
+  }
+  let activeInference = null;
+  let ratingWorker = null,
+    ratingMode = null,
+    modelIdleTimer;
+  function unloadRatingModel() {
+    clearTimeout(modelIdleTimer);
+    ratingWorker?.terminate();
+    ratingWorker = null;
+  }
+  function runWorker(
+    worker,
+    payload,
+    transfer,
+    token,
+    maxTime,
+    mapProgress = (p) => p,
+  ) {
+    return new Promise((resolve, reject) => {
+      let lastPercent = 0,
+        settled = false;
+      const timer = setTimeout(
+        () =>
+          reject(
+            new Error(
+              "Model loading or inference timed out. Check the connection or choose measurements only.",
+            ),
+          ),
+        maxTime,
+      );
+      const finish = (fn, value) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        activeInference = null;
+        fn(value);
+      };
+      activeInference = { worker, reject: (error) => finish(reject, error) };
+      worker.onmessage = ({ data }) => {
+        if (data.id !== token || token !== runId) return;
+        if (data.type === "progress") {
+          const percent = Math.max(
+            lastPercent,
+            Math.round(mapProgress(data.percent)),
+          );
+          lastPercent = percent;
+          $("#scan-bar").style.width = percent + "%";
+          $("#scan-percent").textContent = percent + "%";
+          $("#scan-stage").textContent = data.stage;
+        }
+        if (data.type === "result") finish(resolve, data);
+        if (data.type === "error") {
+          const error = new Error(data.message);
+          error.raw = data.raw;
+          finish(reject, error);
+        }
+      };
+      worker.onerror = (error) =>
+        finish(
+          reject,
+          new Error(
+            "The browser inference engine could not load. " +
+              (error.message || "Check the model CDN connection."),
+          ),
+        );
+      worker.postMessage({ ...payload, id: token }, transfer);
+    });
+  }
+  async function faceCrop(photo, report) {
+    const bitmap = await createImageBitmap(await (await fetch(photo)).blob());
+    const points = report.points;
+    const xs = points.map((p) => p[0] * bitmap.width),
+      ys = points.map((p) => p[1] * bitmap.height);
+    const minX = Math.min(...xs),
+      maxX = Math.max(...xs),
+      minY = Math.min(...ys),
+      maxY = Math.max(...ys);
+    const fw = maxX - minX,
+      fh = maxY - minY;
+    const x = Math.max(0, minX - fw * 0.2),
+      y = Math.max(0, minY - fh * 0.4);
+    const width = Math.min(bitmap.width - x, maxX + fw * 0.2 - x),
+      height = Math.min(bitmap.height - y, maxY + fh * 0.12 - y);
+    const canvas = document.createElement("canvas");
+    const scale = Math.min(1, 512 / Math.max(width, height));
+    canvas.width = Math.max(1, Math.round(width * scale));
+    canvas.height = Math.max(1, Math.round(height * scale));
+    canvas
+      .getContext("2d")
+      .drawImage(
+        bitmap,
+        x,
+        y,
+        width,
+        height,
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+      );
+    bitmap.close();
+    return new Promise((resolve, reject) =>
+      canvas.toBlob(
+        (blob) =>
+          blob
+            ? resolve(blob)
+            : reject(new Error("Face crop could not be prepared.")),
+        "image/png",
+      ),
+    );
   }
   async function analyzePhoto() {
     if (!selectedPhoto) return;
@@ -897,77 +1126,156 @@
     $("#analyze-button").disabled = true;
     $("#upload-mode").disabled = true;
     $("#camera-mode").disabled = true;
-    $("#analyze-button").textContent = "Creating your report…";
-    $("#scan-loading").hidden = false;
     $("#change-photo").disabled = true;
+    const mode = $("#analysis-mode").value;
+    const withAI = mode !== "measure";
+    $("#analysis-mode").disabled = true;
+    $("#analyze-button").textContent = "Measuring your face…";
+    $("#scan-loading").hidden = false;
     $("#scan-error").textContent = "";
-    $("#scan-bar").style.width = "0%";
-    const stages = [
-      "Preparing your image",
-      "Sampling image data",
-      "Building simulated facial metrics",
-      "Organizing example priorities",
-      "Finishing your report",
-    ];
+    $("#scan-bar").style.width = "2%";
+    $("#scan-percent").textContent = "2%";
+    $("#scan-stage").textContent = "Decoding your photo";
+    let worker, timeout;
     try {
-      const seed = selectedSeed ?? hashBytes(new TextEncoder().encode(photo)),
-        start = performance.now();
-      await new Promise((resolve) => {
-        const tick = () => {
-          if (token !== runId || !scanDialog.open) {
-            resolve();
-            return;
-          }
-          const percent = Math.min(
-            100,
-            Math.round((performance.now() - start) / 34),
+      if (location.protocol === "file:")
+        throw new Error(
+          "Real face analysis requires HTTPS or localhost. Open the deployed site or run the local server.",
+        );
+      const bitmap = await createImageBitmap(await (await fetch(photo)).blob());
+      if (token !== runId || !scanDialog.open) {
+        bitmap.close();
+        return;
+      }
+      worker = new Worker(new URL("face-worker.js", document.baseURI));
+      let report = sanitizeReport(
+        (
+          await runWorker(worker, { bitmap }, [bitmap], token, 90000, (p) =>
+            withAI ? 2 + p * 0.16 : p,
+          )
+        ).report,
+      );
+      worker.terminate();
+      if (token !== runId || !scanDialog.open) return;
+      if (!report)
+        throw new Error("The measurement report was invalid. Please retry.");
+      if (withAI) {
+        try {
+          if (Math.abs(report.yaw) > 30 || report.confidence < 45)
+            throw new Error(
+              "Retake a clear frontal portrait before AI scoring. The capture confidence is too low.",
+            );
+          // Fingerprints are cache lookups only; their bits never become ratings.
+          const digest = await crypto.subtle.digest(
+            "SHA-256",
+            new TextEncoder().encode(
+              "Qwen-Smol-pinned-v3:" +
+                mode +
+                ":" +
+                AscendRating.RUBRIC +
+                ":" +
+                photo,
+            ),
           );
-          $("#scan-bar").style.width = `${percent}%`;
-          $("#scan-percent").textContent = `${percent}%`;
-          $("#scan-stage").textContent =
-            stages[Math.min(4, Math.floor(percent / 22))];
-          if (percent === 100) resolve();
-          else setTimeout(tick, 65);
-        };
-        tick();
-      });
+          const cacheKey = [...new Uint8Array(digest)]
+            .map((v) => v.toString(16).padStart(2, "0"))
+            .join("");
+          const cached = state.scans.findLast(
+            (s) =>
+              s.report?.cacheKey === cacheKey &&
+              s.report.ai?.rubric === AscendRating.RUBRIC,
+          )?.report.ai;
+          if (cached) {
+            report = sanitizeReport({
+              ...report,
+              ai: cached,
+              cacheKey,
+              aiCached: true,
+            });
+          } else {
+            clearTimeout(modelIdleTimer);
+            if (ratingMode !== mode) unloadRatingModel();
+            ratingMode = mode;
+            ratingWorker ||= new Worker(
+              new URL("rating-worker.js", document.baseURI),
+              { type: "module" },
+            );
+            const croppedPhoto = await faceCrop(photo, report);
+            if (token !== runId || !scanDialog.open) {
+              unloadRatingModel();
+              return;
+            }
+            const result = await runWorker(
+              ratingWorker,
+              { photo: croppedPhoto, mode },
+              [],
+              token,
+              600000,
+            );
+            report = sanitizeReport({ ...report, ai: result.rating, cacheKey });
+            modelIdleTimer = setTimeout(unloadRatingModel, 120000);
+          }
+        } catch (error) {
+          unloadRatingModel();
+          if (token !== runId || !scanDialog.open) return;
+          report = sanitizeReport({
+            ...report,
+            aiError: error.message,
+            aiRaw: error.raw,
+          });
+        }
+      }
       if (token !== runId || !scanDialog.open) return;
       const scan = {
-        id: `scan-${Date.now()}-${seed}`,
+        id: "scan-" + Date.now(),
         date: new Date().toISOString(),
-        seed,
+        seed: null,
+        report,
         photo: state.profile.savePhotos ? photo : null,
       };
-      if (!state.scans.length) {
-        state.plan = rankedFixes(simulateAnalysis(seed))
+      if (!state.scans.some((s) => s.report)) {
+        state.plan = rankedFixes(report)
           .slice(0, 3)
           .map((f) => f.id);
         state.completed = [];
       }
       state.scans.push(scan);
       state.scans = state.scans.slice(-MAX_PHOTOS);
-      // Gracefully retain scores if the browser cannot fit another photo.
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       } catch {
         scan.photo = null;
         saveState();
-        toast("Scan saved without a photo: browser storage is full.");
       }
+      $("#scan-bar").style.width = "100%";
+      $("#scan-percent").textContent = "100%";
+      activeInference = null;
       renderAll();
       scanDialog.close();
       navigate("scan");
-      toast("Your simulated report is ready.");
-    } catch {
-      $("#scan-error").textContent =
-        "This photo could not be analyzed. Try another image.";
-      $("#analyze-button").disabled = false;
-      $("#analyze-button").textContent = "Try analysis again";
-      $("#scan-loading").hidden = true;
+      toast(
+        report.ai
+          ? "Your on-device AI report is ready."
+          : report.aiError
+            ? "Landmarks saved. AI could not score this scan — see report."
+            : "Your measured report is ready.",
+      );
+    } catch (error) {
+      if (token === runId && scanDialog.open) {
+        $("#scan-error").textContent =
+          error.message || "Face analysis failed. Please retry.";
+        $("#analyze-button").disabled = false;
+        $("#analyze-button").textContent = "Retry face analysis";
+        $("#scan-loading").hidden = true;
+      }
     } finally {
+      clearTimeout(timeout);
+      worker?.terminate();
+      activeInference = null;
       $("#upload-mode").disabled = false;
       $("#camera-mode").disabled = false;
       $("#change-photo").disabled = false;
+      $("#analysis-mode").disabled = false;
     }
   }
 
@@ -1178,6 +1486,16 @@
     if (el.dataset.route) navigate(el.dataset.route);
     if (el.hasAttribute("data-close-dialog")) el.closest("dialog").close();
     if (el.dataset.article) openArticle(el.dataset.article);
+    if (el.dataset.rescan) {
+      const scan = state.scans.find((s) => s.id === el.dataset.rescan);
+      if (scan?.photo) {
+        openScan();
+        selectedPhoto = scan.photo;
+        $("#scan-preview").src = selectedPhoto;
+        setScanMode(false);
+        $("#analyze-button").disabled = false;
+      }
+    }
     if (el.dataset.habit) {
       const key = dateKey(),
         checks = state.checks[key] || [];
@@ -1271,13 +1589,7 @@
         img.style.filter = `contrast(${1 + amount * 0.1}) brightness(${1 + amount * 0.1}) saturate(${1 - amount * 0.16})`;
     }
   });
-  $("#explore-demo").addEventListener("click", () => {
-    navigate("scan");
-    if (state.scans.length)
-      toast(
-        "Showing your latest simulated report. Demo returns when scan history is empty.",
-      );
-  });
+  $("#explore-demo").addEventListener("click", () => openArticle("simulation"));
   $("#method-button").addEventListener("click", () =>
     openArticle("simulation"),
   );
@@ -1330,6 +1642,12 @@
   scanDialog.addEventListener("close", () => {
     runId++;
     stopCamera();
+    if (activeInference) {
+      if (activeInference.worker === ratingWorker) ratingWorker = null;
+      activeInference.worker.terminate();
+      activeInference.reject(new Error("Scan cancelled"));
+      activeInference = null;
+    }
     $("#change-photo").disabled = false;
   });
   $$("#drop-zone").forEach((zone) => {

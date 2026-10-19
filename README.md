@@ -1,150 +1,172 @@
 # Ascend
 
-A premium, responsive single-page facial-analysis concept built with plain HTML, CSS, and JavaScript. No package installation, API key, backend, or build step is required.
+A premium, responsive facial-analysis workspace made with HTML, CSS and JavaScript. The site runs on free GitHub Pages. AI runs in each visitor’s browser: **no API keys, subscriptions, inference server, or per-scan charges**.
+
+- [Live website](https://12zl.github.io/ascend/)
+- [GitHub repository](https://github.com/12zl/ascend)
+
+## Real browser AI
+
+The old file-hash simulation has been removed. Two independent engines process each photograph locally:
+
+1. **MediaPipe Face Landmarker** detects 478 facial points and measures visible proportions, pose and capture quality.
+2. **Qwen3-VL / SmolVLM** reads a crop around the detected face and generates a subjective current appearance rating, a grooming/presentation potential rating and visual suggestions. Transformers.js runs quantized ONNX weights through WebGPU in a separate Worker.
+
+| Mode              | Model                                    |                  Weight download | Intended use                       |
+| ----------------- | ---------------------------------------- | -------------------------------: | ---------------------------------- |
+| Stronger AI       | onnx-community/Qwen3-VL-2B-Instruct-ONNX |                          1.37 GB | Devices with sufficient GPU memory |
+| Fast AI           | HuggingFaceTB/SmolVLM-500M-Instruct      |                           390 MB | Smaller download, weaker reasoning |
+| Measurements only | MediaPipe                                | Approximately 15 MB plus runtime | Lightweight landmark reports       |
+
+The first use downloads public model files. Later uses can reuse the browser cache; browsers may evict cached files. A compatible WebGPU browser and adequate memory are required for AI. Measurements mode remains available when AI cannot run. Recent Chrome/Edge with hardware acceleration is a practical starting point. Performance depends on the device; there is no inference service to bill the owner or visitor. GitHub and model-download hosts retain their ordinary usage limits and availability policies.
+
+**These are real generated model responses, not validated beauty predictions.** These are general vision-language models, not specialized attractiveness benchmarks. It can give poor, biased or repetitive opinions and may disagree with people. An actual model does not make attractiveness objective. Potential describes a grooming scenario, not a measured future face or promised score increase.
+
+### How scores are obtained
+
+The same face crop is queried three times: current rating, presentation potential, then grooming advice. Prompts are in `rating-worker.js`; decoding is greedy (`do_sample: false`). A score is displayed only if the response is a single valid integer from 1 to 100, optionally followed by `/100` or punctuation. Invalid output leaves the rating blank and preserves an inspectable failure report. No random, file-size, filename, image-hash or landmark-weight formula supplies a replacement number. Potential is not forced to be higher than the current score.
+
+Reports expose the actual generated answers and model identifier. Only advice returned in the requested `issue | severity | action` format becomes an AI suggestion card. Other generated text is kept as the model’s comment rather than mislabeled as a concrete fix. Measured capture issues have separate severity ratings. Routine guides supply concrete skincare, grooming, eyewear and photo actions.
+
+An identical processed photo, model mode and rubric can reuse a saved valid AI response. SHA-256 is used **only as a local cache lookup key**; its bits never generate ratings. New model/rubric versions should change the cache version in `app.js`. Clear scan history to remove saved results. Geometry-only scans and former simulated ratings are excluded from AI score history.
+
+### Pinned models and runtime
+
+- Transformers.js: `@huggingface/transformers@4.3.1`, bundled `dist/transformers.js`.
+- Stronger model revision: `5dc9194ba42fa62c2f1440d98a71f7cd5280afe2`.
+- Fast model revision: `a7da5b986cb59b408707209984f360a5f4ad7e47`.
+- Qwen ONNX components: `embed_tokens_q4f16`, `vision_encoder_q4f16`, `decoder_model_merged_q4f16` plus external data files. SmolVLM uses `embed_tokens_fp16`, `vision_encoder_q4`, `decoder_model_merged_q4`.
+- MediaPipe runtime: `@mediapipe/tasks-vision@1.1.1`; official float16 Face Landmarker v1.
+- Qwen3-VL/SmolVLM weights and the listed runtimes are published under Apache-2.0; see their upstream license notices. Model weights are downloaded from upstream and are not included in this repository.
 
 ## Files
 
 ```text
 ascend/
-├── index.html     # Application shell, accessible navigation, and native dialogs
-├── styles.css     # Responsive dark theme, component styles, and animation
-├── app.js         # Simulation, canvas face map, persistence, and interactions
-└── README.md      # Setup, behavior, publishing, and implementation notes
+├── index.html        # App shell, navigation, upload/webcam dialog
+├── styles.css        # Responsive premium dark theme
+├── app.js            # UI, local data, worker coordination, crop and cache
+├── analysis-core.js  # Pure landmark geometry and capture checks
+├── face-worker.js    # MediaPipe inference worker
+├── rating-core.js    # Strict model-response validation
+├── rating-worker.js  # Actual local vision-language model inference
+└── README.md
 ```
 
-Keep the three application files together. All application asset paths are relative, so deployment works under a GitHub Pages repository subpath. Typography uses Google Fonts with local sans-serif fallbacks. The app otherwise has no external runtime dependencies; all icons and decorative facial graphics are generated locally.
+Keep all eight files together. No build step is required. Relative worker paths work under a GitHub Pages repository subpath.
+
+## Included features
+
+- Landing section with an original animated canvas facial mesh and Start Face Scan action.
+- Upload, drag-and-drop, image validation, webcam preview/capture, loading progress and cancellation.
+- Current and potential AI score gauges, generated observations, severity and concrete action cards.
+- Real landmark overlay and six measured facial proportions; skin/hairline are not numerically measured by the landmark engine.
+- “What You Need to Fix,” related routine selection and a prioritized action plan.
+- Current vs Potential comparison: adjustable lighting on the same photo, clearly labeled as a presentation preview rather than anatomy generation.
+- AI score history, progress photo timeline, saved-photo rescanning, scan removal.
+- Daily habits, custom routines, completion tracking, local-date week overview.
+- Body analysis teaser, style/grooming directions, searchable educational library.
+- Profile, reduced-motion preference, photo retention, validated JSON backup export/import, confirmed workspace clearing.
+- Native keyboard-accessible dialogs, mobile navigation and responsive empty states.
+
+## Separate geometry measurements
+
+Coordinates are converted to image pixels. The eye line corrects head roll before projected proportions are calculated.
+
+| Metric             | Measurement                                    | Reference | Tolerance | Weight |
+| ------------------ | ---------------------------------------------- | --------: | --------: | -----: |
+| Jaw width          | Jaw 172–397 / cheeks 234–454                   |      0.78 |      0.20 |    20% |
+| Chin proportion    | Lip 17–chin 152 / nose 2–chin 152              |      0.50 |      0.20 |    15% |
+| Midface balance    | Brow midpoint 105/334–nose 2 / nose 2–chin 152 |      0.90 |      0.35 |    20% |
+| Eye aspect         | Mean visible eye width / lid height            |       3.2 |       1.5 |    15% |
+| Canthal tilt       | Mean eye-corner angle, roll corrected          |        4° |       12° |    10% |
+| Projected symmetry | Five mirrored landmark pairs                   | See below |         — |    20% |
+
+The first five reference-band indices use `clamp(100 - 35 * abs(measurement - reference) / tolerance, 1, 100)`. Projected symmetry uses `clamp(100 - 250 * mean normalized paired-point error, 1, 100)`. The optional geometry summary is their rounded weighted mean. These editorial reference bands **do not generate the AI appearance rating** and are not universal beauty ideals.
+
+Capture checks use head turn, roll, face size, face-crop luminance, Laplacian sharpness and expression blendshapes. Confidence is an application capture heuristic, not a model probability. Turn ≥30°, cheek width <85 pixels or confidence <55% withholds the geometry aggregate. Very low confidence or excessive turn also prevents AI scoring. No face or multiple faces produces an error without a substitute score.
 
 ## Run locally
 
-Open `index.html` to explore the interface and upload a photo. For webcam access, serve the directory on localhost or use an HTTPS deployment. For example, with Python installed:
+Serve over localhost or HTTPS; `file://` cannot load the Workers correctly.
 
 ```sh
 cd ascend
 python -m http.server 8080
 ```
 
-Visit `http://localhost:8080`. Allow camera access when choosing **Use webcam**. If a camera is unavailable or permission is denied, upload a photo instead.
-
-## Included experiences
-
-- Landing / overview with an original animated 3D canvas face map.
-- Photo upload and drag-and-drop for JPEG, PNG, and WebP, up to 12 MB.
-- Webcam preview, capture, clear permission/error states, and track cleanup.
-- Staged loading sequence and deterministic simulated analysis.
-- Resting Face Score and Potential Score, both between 1 and 100, with gauges.
-- Eight metric panels: jaw, chin, midface, eye area, canthal tilt approximation, symmetry, skin, and hairline.
-- **What You Need to Fix** with specific example observations, severity, concrete recommendations, guide links, and actions to add priorities to the plan.
-- **Current vs Potential** side-by-side comparison with adjustable lighting preview.
-- Score history chart, progress photo timeline, individual scan removal, and up to 20 saved scan records.
-- Prioritized action plan with completion tracking and conversion to daily habits.
-- Daily habit tracker, custom habits, deletion, week overview, and historical check-in total.
-- Body analysis teaser with a working route to a movement routine.
-- Three style directions with tailored hair, wardrobe, and grooming content.
-- Six searchable, filterable educational guides in reading dialogs.
-- Profile name, primary focus, photo storage preference, reduced motion, JSON export/import, and confirmed data deletion.
-- Browser-local persistence, responsive layouts, keyboard focus styles, native focus-trapped dialogs, accessible chart/gauge descriptions, and system reduced-motion support.
-
-## Analysis engine: what is simulated
-
-This release implements the explicitly supported **realistic simulated analysis** option. It does not include face-api.js, a trained model, face detection, clinical inference, or a real attractiveness estimator.
-
-1. The browser decodes the image and downsamples it to at most 640 pixels on its longest edge.
-2. The result is re-encoded as JPEG, excluding the original file metadata.
-3. The original uploaded file bytes are hashed using FNV-style integer operations. Webcam captures use the captured image bytes. Hashing before canvas rendering keeps repeated uploads consistent across browser canvas variations.
-4. The hash seeds a deterministic linear congruential generator, producing illustrative feature values, a resting score, an example angle, and a higher potential score.
-5. The eight metric scores determine the ordering of example recommendations. The report labels all observations and severities as examples.
-
-The same uploaded file produces the same scores. Different files, crops, or encodings can change them. Scores are not biometric measurements, diagnoses, or evidence of physical progress. Blank storage shows a clearly labeled sample report; the progress page stays empty until an actual user scan is recorded.
-
-The Potential photo uses only CSS contrast, brightness, and saturation changes. It preserves facial anatomy and is labeled as an illustrative lighting preview, not a treatment prediction. Without a retained photo, an original vector face outline occupies the comparison frames.
-
-To integrate a real analyzer, replace `simulateAnalysis()` and adapt the metric fields. Document its validated capabilities, load models locally when possible, and update the simulation labels only when the implementation supports those claims.
+Visit `http://localhost:8080`. Allow the first model download to finish. Webcam capture needs browser permission. Close the scan to cancel inference. The AI worker is released after two idle minutes; downloaded weights can remain cached.
 
 ## Local data and privacy
 
-- No uploaded photo is sent to a server. Image processing and storage happen in the browser.
-- The `ascend.workspace.v1` localStorage key contains profile settings, scan hashes, optionally compressed photos, habits, plan items, and daily completion records.
-- Data is scoped to this browser and origin. It does not synchronize across devices. Private browsing, clearing site data, or changing domains can remove or hide the workspace.
-- Disabling **Save progress photos** and saving preferences also removes photos from existing scan records. Scores remain.
-- A maximum of 20 scans is retained. The oldest record is removed when the limit is reached.
-- If image storage exceeds the browser quota, the newest scan is saved without its photo where possible. Export provides a portable backup.
-- Exported JSON can include face photos. Import restores a validated backup in place of the current workspace.
-- Camera tracks stop on capture, mode switch, dialog closure, or leaving the page.
-- Fonts are fetched from Google Fonts; their failure does not block the app.
-- localStorage is convenience storage, not encryption or a multi-user security boundary.
+Photos are resized to at most 640px and decoded in local Workers. The AI crop includes the face and surrounding hair. Photos and coordinates are **never uploaded** to Hugging Face, Google, jsDelivr, GitHub or a scoring service. Network requests retrieve runtime, WASM, model and font assets only. Google Fonts has local fallbacks.
+
+`ascend.workspace.v1` localStorage holds preferences, habits, check-ins, plans and up to 20 reports. Saving compressed progress photos is optional. Disabling photo saving removes saved photographs when preferences are saved; reports remain. Browser storage is local, unencrypted and not synchronized. Exported backups can contain photographs, coordinates and AI responses. Import replaces the workspace with validated backup data. Never commit personal photographs or backup files to the public repository.
 
 ## Publish on GitHub Pages
 
-### 1. Create a GitHub repository
+### 1. Create a repository
 
-1. Sign in at [github.com](https://github.com).
-2. Click **+ → New repository**.
-3. Enter a name such as `ascend`.
-4. Choose **Public** for straightforward free Pages hosting. Private repository Pages availability depends on your GitHub plan.
+1. Sign in at [GitHub](https://github.com).
+2. Select **+ → New repository**.
+3. Name it `ascend` or choose another name.
+4. Select **Public** for free GitHub Pages hosting.
 5. Click **Create repository**.
 
 ### 2. Upload the files
 
-1. Open the repository.
-2. Choose **Add file → Upload files**. In a completely empty repository, use the **uploading an existing file** link.
-3. Drag in `index.html`, `styles.css`, `app.js`, and `README.md` from this folder.
-4. Put these files at the **repository root**, not inside an extra `ascend` directory.
-5. Click **Commit changes** and commit to `main`.
+1. Open the repository and choose **Add file → Upload files** (or **uploading an existing file** in a new repository).
+2. Upload all eight files listed above to the repository root.
+3. Commit the files to `main`.
+4. Do not upload photographs, exported backups or model caches.
 
-Alternatively, use Git from the project folder:
+Alternatively, from the project folder:
 
 ```sh
 git init
-git add index.html styles.css app.js README.md
-git commit -m "Build Ascend frontend"
+git add index.html styles.css app.js analysis-core.js face-worker.js rating-core.js rating-worker.js README.md
+git commit -m "Build Ascend with free on-device vision AI"
 git branch -M main
 git remote add origin https://github.com/YOUR-USERNAME/ascend.git
 git push -u origin main
 ```
 
-Replace `YOUR-USERNAME` and the repository name with your own values.
-
 ### 3. Enable GitHub Pages
 
-1. In the repository, open **Settings → Pages**.
+1. Open **Settings → Pages**.
 2. Under **Build and deployment**, choose **Deploy from a branch**.
-3. Select the `main` branch and the `/ (root)` folder.
+3. Select `main` and `/ (root)`.
 4. Click **Save**.
-5. Allow the Pages deployment to complete. Check the repository's **Actions** tab if you need to inspect deployment progress.
+5. Wait for **pages build and deployment** in **Actions** to succeed.
 
-### 4. Get your live link
+### 4. Get the live link
 
-1. Return to **Settings → Pages** after deployment succeeds.
-2. Use **Visit site**, or copy the displayed URL.
-3. For a repository named `ascend`, the usual URL is `https://YOUR-USERNAME.github.io/ascend/`.
-4. Open that URL and verify the overview, photo upload, and webcam permission flow. GitHub Pages provides HTTPS, which enables the webcam API in supporting browsers.
+1. Return to **Settings → Pages**.
+2. Click **Visit site** or copy the displayed URL.
+3. A repository called `ascend` normally publishes at `https://YOUR-USERNAME.github.io/ascend/`.
+4. Open the live page and verify model loading, a scan and mobile navigation.
 
-Pushing edits to `main` triggers another deployment. Wait for that deployment to succeed before checking the changed live site.
+Every new commit to the publishing branch redeploys the site. Wait for deployment success before checking the update. This project needs no server secrets, environment variables or paid provider accounts.
 
-## Manual acceptance checks
+## Verification checklist
 
-1. Load a fresh workspace: overview shows **Demo report**; progress shows an empty state.
-2. Upload a portrait; verify preview, progress stages, report, metrics, priorities, and comparison slider.
-3. Scan the same file twice; verify matching simulated scores and two timeline records.
-4. Reload: confirm scans, profile, and routines persist.
-5. Check a habit; confirm its state updates on the overview and routine pages.
-6. Add a custom habit and remove it. Complete a plan item, add another from the report, and convert it to a habit.
-7. Search and filter the library; read an article and close it with Escape.
-8. Change style directions and profile settings. Export a backup; import it and check that it restores the workspace.
-9. Disable photo saving, save settings, and verify the timeline retains scores with photo placeholders.
-10. Test a denied webcam permission, a missing camera, an invalid upload, a very small image, and a file above 12 MB.
-11. On a camera-equipped device, allow permission, capture a photo, and verify the camera indicator stops after capture or dismissal.
-12. Check desktop and 390px mobile layouts, menu navigation, keyboard focus, dialogs, and reduced motion.
-13. Clear data through the confirmation dialog; verify the initial empty and demo states return.
+1. A fresh workspace shows no sample rating.
+2. Scan a clear portrait in AI mode; inspect the actual generated answers and real landmarks.
+3. Rescan the identical photo in the same mode; verify cached result reuse.
+4. Try measurements-only mode and confirm AI gauges stay unscored.
+5. Try a no-face image, an unsuitable pose and a two-face image.
+6. Cancel during model loading or generation; no late report should be saved.
+7. Test unsupported WebGPU or a blocked model host; no fabricated score should appear.
+8. Reload, export/import, disable photo saving and verify old fake ratings remain excluded.
+9. Verify action plans, routines, library, profile, keyboard navigation and mobile layout.
 
-## Browser support
+## Upstream documentation
 
-Current Chrome, Edge, Firefox, and Safari with support for native `dialog`, Canvas 2D, CSS conic gradients, ResizeObserver, and modern JavaScript. Webcam capture requires a secure context and user permission. No service worker or offline install layer is included.
-
-## Editorial sources
-
-- [American Academy of Dermatology: how to select sunscreen](https://www.aad.org/public/everyday-care/sun-protection/shade-clothing-sunscreen/how-to-select-sunscreen)
-- [American Association of Orthodontists: mewing explained](https://aaoinfo.org/whats-trending/is-mewing-bad-for-you/)
-- [GitHub Docs: configuring a publishing source](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
-
-The application is complete as a static frontend product demonstration. Real biometric analysis, accounts, cloud synchronization, billing, clinical recommendations, and automatic GitHub repository creation are outside this frontend implementation.
+- [Qwen3-VL 2B upstream model](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct)
+- [Qwen3-VL ONNX weights](https://huggingface.co/onnx-community/Qwen3-VL-2B-Instruct-ONNX)
+- [SmolVLM 500M model](https://huggingface.co/HuggingFaceTB/SmolVLM-500M-Instruct)
+- [Transformers.js WebGPU](https://huggingface.co/docs/transformers.js/guides/webgpu)
+- [MediaPipe Face Landmarker for Web](https://ai.google.dev/edge/mediapipe/solutions/vision/face_landmarker/web_js)
+- [GitHub Pages publishing sources](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
+- [AAD sunscreen selection](https://www.aad.org/public/everyday-care/sun-protection/shade-clothing-sunscreen/how-to-select-sunscreen)
+- [AAO mewing explanation](https://aaoinfo.org/whats-trending/is-mewing-bad-for-you/)

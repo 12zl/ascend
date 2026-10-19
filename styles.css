@@ -1,4 +1,4 @@
-/* Ascend design system — no external assets or build tools required. */
+/* Ascend design system. Face-model assets are loaded by face-worker.js. */
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Manrope:wght@400;500;550;600;650;700;750;800&display=swap");
 :root {
   color-scheme: dark;
@@ -2725,4 +2725,117 @@ dialog[open] {
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+.landmark-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 270px;
+  pointer-events: none;
+  z-index: 1;
+  fill: #c1f4a4;
+  stroke: #c1f4a4;
+  stroke-width: 1;
+  filter: drop-shadow(0 0 2px #101810);
+}
+.landmark-overlay polyline {
+  fill: none;
+  stroke-width: 1.1;
+}
+.landmark-overlay circle {
+  stroke: none;
+  opacity: 0.65;
+}
+.measurement-method {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  margin-bottom: 25px;
+}
+.measurement-method h3 {
+  font-size: 18px;
+  margin-top: 12px;
+}
+.measurement-method p {
+  font-size: 11px;
+  color: var(--muted);
+  max-width: 730px;
+  margin-top: 10px;
+}
+.metric-value small {
+  display: block;
+  margin: 3px 0 0;
+  font-size: 9px;
+  letter-spacing: 0;
+}
+.metric-value {
+  font-size: 25px;
+}
+.gauge strong {
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 700px) {
+  .measurement-method {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+  .measurement-method h3 {
+    font-size: 17px;
+  }
+}
+.ai-mode-label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 20px 0 8px;
+}
+.ai-mode-select {
+  width: 100%;
+  padding: 13px;
+  background: #151a16;
+  border: 1px solid #333d34;
+  border-radius: 8px;
+  color: var(--text);
+  font: inherit;
+}
+.ai-download-note {
+  line-height: 1.6;
+  margin: 10px 0 18px;
+}
+.model-output {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.model-output summary {
+  cursor: pointer;
+  color: var(--green);
+  font-size: 12px;
+}
+.model-output pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 12px/1.7 monospace;
+  color: var(--muted);
+  max-height: 350px;
+  overflow: auto;
+  padding: 16px 0;
+}
+.model-card {
+  padding: 26px;
+  margin-bottom: 24px;
+}
+.model-card p {
+  line-height: 1.75;
+  margin-top: 12px;
+}
+.ai-fix-label {
+  color: var(--green);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
 }

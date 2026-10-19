@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#0b0e0c" />
     <meta
       name="description"
-      content="Ascend — a considered approach to facial analysis, personal style, and daily progress. Explore your potential with a simulated face scan."
+      content="Ascend — a considered approach to facial analysis, personal style, and daily progress. Measure facial landmarks privately on your device."
     />
     <title>Ascend — Your next level</title>
     <link
@@ -14,6 +14,7 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23c3f5a5'/%3E%3Cpath d='M10 29 20 9 30 29M15 21h10' stroke='%23101511' fill='none' stroke-width='3'/%3E%3C/svg%3E"
     />
     <link rel="stylesheet" href="styles.css" />
+    <script src="rating-core.js" defer></script>
     <script src="app.js" defer></script>
   </head>
   <body>
@@ -137,7 +138,7 @@
                 <button class="button button-green" data-open-scan>
                   Discover your potential <span>↗</span></button
                 ><button class="text-button" id="explore-demo">
-                  Explore demo <span>→</span>
+                  How scoring works <span>→</span>
                 </button>
               </div>
               <div class="hero-foot">
@@ -168,7 +169,7 @@
           <div class="section-heading">
             <h2>
               Your facial overview
-              <span class="badge" id="report-badge">DEMO REPORT</span>
+              <span class="badge" id="report-badge">AWAITING SCAN</span>
             </h2>
             <button class="text-button" data-route="scan">
               View full analysis <span>↗</span>
@@ -179,15 +180,17 @@
               <div class="card-label">
                 Resting Face Score <span data-icon="face"></span>
               </div>
-              <div class="gauge" id="resting-gauge" style="--value: 72">
+              <div class="gauge" id="resting-gauge" style="--value: 0">
                 <div>
-                  <strong id="resting-score">72</strong><span>/ 100</span>
+                  <strong id="resting-score">—</strong><span>/ 100</span>
                 </div>
               </div>
               <div class="score-caption">
                 <i></i><span id="resting-caption">Your starting point</span>
               </div>
-              <p class="muted small">A baseline for your personal journey</p>
+              <p class="muted small">
+                A subjective opinion from on-device vision AI
+              </p>
             </article>
             <article class="card score-card potential-card">
               <div class="card-label">
@@ -196,17 +199,17 @@
               <div
                 class="gauge potential"
                 id="potential-gauge"
-                style="--value: 86"
+                style="--value: 0"
               >
                 <div>
-                  <strong id="potential-score">86</strong><span>/ 100</span>
+                  <strong id="potential-score">—</strong><span>/ 100</span>
                 </div>
               </div>
               <div class="score-caption green">
                 <span data-icon="trend"></span
-                ><span id="potential-caption">+14 points of potential</span>
+                ><span id="potential-caption">Awaiting browser AI</span>
               </div>
-              <p class="muted small">An illustrative goal to work toward</p>
+              <p class="muted small">A grooming & presentation scenario</p>
             </article>
             <article class="card focus-card">
               <div class="card-label">
@@ -255,7 +258,7 @@
             <span
               >ASCEND <span class="muted">/</span> A little better, every
               day.</span
-            ><span>SIMULATED ANALYSIS · LOCAL-FIRST</span>
+            ><span>REAL LANDMARKS · LOCAL-FIRST</span>
           </footer>
         </section>
 
@@ -278,8 +281,8 @@
           <div class="notice">
             <span data-icon="info"></span
             ><span id="simulation-label"
-              >Demo report · Illustrative scores and observations from the
-              simulation engine.</span
+              >Real vision AI and facial landmarks run on your device. No paid
+              API.</span
             ><button class="text-button" id="method-button">
               How it works ↗
             </button>
@@ -558,6 +561,17 @@
       </div>
       <h2 id="scan-dialog-title">Your starting point,<br />in focus.</h2>
       <p class="muted">Use a clear, front-facing photo in even light.</p>
+      <label class="ai-mode-label" for="analysis-mode">Analysis engine</label>
+      <select id="analysis-mode" class="ai-mode-select">
+        <option value="ai">Browser AI · stronger Qwen3-VL 2B model · free</option>
+        <option value="fast">Browser AI · fast 500M model · free</option>
+        <option value="measure">Measured landmarks only · lightweight</option>
+      </select>
+      <p class="muted small ai-download-note">
+        Stronger AI downloads about 1.4 GB; fast AI about 400 MB. Both use
+        WebGPU and cache model files. Photos stay on this device. No account,
+        API key, or payment.
+      </p>
       <div class="scan-mode">
         <button id="upload-mode" class="active">Upload photo</button
         ><button id="camera-mode">Use webcam</button>
@@ -612,8 +626,8 @@
         Analyze my face <span>↗</span>
       </button>
       <div class="scan-meta">
-        <span data-icon="lock"></span> On-device processing
-        <span>·</span> Simulated analysis
+        <span data-icon="lock"></span> On-device processing <span>·</span> Free
+        browser AI
       </div>
     </dialog>
     <dialog
