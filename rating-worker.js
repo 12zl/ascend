@@ -1,5 +1,5 @@
 /* A real, local vision-language model. Only model files cross the network. */
-import "./rating-core.js";
+import "./rating-core.js?v=ai-20261019-3";
 const MODELS = {
   fast: {
     id: "HuggingFaceTB/SmolVLM-500M-Instruct",

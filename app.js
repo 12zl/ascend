@@ -1147,7 +1147,7 @@
         bitmap.close();
         return;
       }
-      worker = new Worker(new URL("face-worker.js", document.baseURI));
+      worker = new Worker(new URL("face-worker.js?v=ai-20261019-3", document.baseURI));
       let report = sanitizeReport(
         (
           await runWorker(worker, { bitmap }, [bitmap], token, 90000, (p) =>
@@ -1197,7 +1197,7 @@
             if (ratingMode !== mode) unloadRatingModel();
             ratingMode = mode;
             ratingWorker ||= new Worker(
-              new URL("rating-worker.js", document.baseURI),
+              new URL("rating-worker.js?v=ai-20261019-3", document.baseURI),
               { type: "module" },
             );
             const croppedPhoto = await faceCrop(photo, report);

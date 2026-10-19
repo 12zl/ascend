@@ -2,7 +2,7 @@
  * Only runtime/model assets are downloaded; no photo is uploaded.
  */
 "use strict";
-importScripts("./analysis-core.js");
+importScripts("./analysis-core.js?v=ai-20261019-3");
 const RUNTIME = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.1";
 const MODEL =
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";

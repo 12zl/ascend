@@ -53,7 +53,7 @@ ascend/
 └── README.md
 ```
 
-Keep all eight files together. No build step is required. Relative worker paths work under a GitHub Pages repository subpath.
+Keep all eight files together. No build step is required. App, stylesheet and worker URLs carry a release query to prevent mixed old/new browser caches. Bump the release query across these files when publishing future runtime changes. Relative worker paths work under a GitHub Pages repository subpath.
 
 ## Included features
 
